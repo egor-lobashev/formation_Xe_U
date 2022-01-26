@@ -1,0 +1,60 @@
+units           metal
+atom_style	    atomic
+
+variable	    a equal 3.554
+variable        max_P equal 500
+variable        frame_period equal 1000000
+
+variable        N_sia index 13
+variable        N_Xe index 6
+variable        seed index 491
+variable        R index 4.35
+variable        size index 10
+
+lattice         bcc $a
+region		    box block 0 ${size} 0 ${size} 0 ${size}
+create_box      3 box
+create_atoms    1 box
+
+# region          bubble sphere $(v_size/2) $(v_size/2) $(v_size/2) $(v_R/v_a)
+# delete_atoms    region bubble
+# create_atoms    3 random ${N_Xe} 49 bubble
+
+# create_atoms    1 random ${N_sia} 49 box
+
+###########
+# pair_style      eam/alloy
+# pair_coeff      * * U_Mo_Xe.2013.eam.alloy U Mo Xe
+
+mass 1 1
+mass 2 1
+mass 3 1
+velocity	    all create 3000.0 ${seed}
+
+# dump            min all atom 1 min_dump.atom
+# minimize        1e-4 1e-6 10000 100000
+
+
+thermo_style    custom step temp press
+
+####################
+# fix             begin all npt temp 1400.0 1400.0 0.5 iso 0.0 0.0 ${max_P}
+
+# compute         unX all property/atom xu yu zu
+# fix             avepos all ave/atom 10 100 ${frame_period} c_unX[1] c_unX[2] c_unX[3]
+
+# fix		        mom all momentum 200 linear 1 1 1
+
+# run             100
+
+####################
+
+# dump light all custom ${frame_period} single_${N_Xe}_sia_${N_sia}.dump id type f_avepos[1] f_avepos[2] f_avepos[3]
+dump init all atom 1 initial_10.atom
+
+thermo		    1000
+run		        0
+
+# unfix		    begin
+# fix             main all nve
+# run 		    500

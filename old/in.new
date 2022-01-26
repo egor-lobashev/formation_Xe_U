@@ -1,0 +1,38 @@
+units metal
+atom_style	atomic
+
+
+variable        frame_period equal 1000000
+variable        seed index 491
+
+read_data       data
+
+velocity	    all create 3000.0 ${seed}
+
+pair_style      eam/alloy
+pair_coeff      * * U_Mo_Xe.2013.eam.alloy U Mo Xe
+
+
+thermo_style custom step temp press
+
+fix             main all nvt temp 1400.0 1400.0 0.5
+
+####################
+
+compute unX all property/atom xu yu zu
+fix avepos all ave/atom 10 100 ${frame_period} c_unX[1] c_unX[2] c_unX[3]
+
+fix		mom all momentum 1000 linear 1 1 1
+run 100
+
+####################
+
+dump light all custom ${frame_period} formation_rand_seed${seed}_p${porosity}.dump id type f_avepos[1] f_avepos[2] f_avepos[3]
+
+thermo		    1000
+run		        1000000
+
+unfix		main
+fix new all nve
+run 			100000000
+

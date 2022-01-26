@@ -1,0 +1,105 @@
+LAMMPS (27 May 2021)
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread. (src/comm.cpp:98)
+  using 1 OpenMP thread(s) per MPI task
+units           metal
+atom_style	    atomic
+
+variable	    a equal 3.554
+variable        max_P equal 500
+variable        frame_period equal 1000000
+
+variable        N_sia index 13
+variable        N_Xe index 6
+variable        seed index 491
+variable        R index 4.35
+variable        size index 10
+
+lattice         bcc $a
+lattice         bcc 3.554
+Lattice spacing in x,y,z = 3.5540000 3.5540000 3.5540000
+region		    box block 0 ${size} 0 ${size} 0 ${size}
+region		    box block 0 10 0 ${size} 0 ${size}
+region		    box block 0 10 0 10 0 ${size}
+region		    box block 0 10 0 10 0 10
+create_box      3 box
+Created orthogonal box = (0.0000000 0.0000000 0.0000000) to (35.540000 35.540000 35.540000)
+  1 by 1 by 1 MPI processor grid
+create_atoms    1 box
+Created 2000 atoms
+  create_atoms CPU = 0.002 seconds
+
+# region          bubble sphere $(v_size/2) $(v_size/2) $(v_size/2) $(v_R/v_a)
+# delete_atoms    region bubble
+# create_atoms    3 random ${N_Xe} 49 bubble
+
+# create_atoms    1 random ${N_sia} 49 box
+
+###########
+# pair_style      eam/alloy
+# pair_coeff      * * U_Mo_Xe.2013.eam.alloy U Mo Xe
+
+mass 1 1
+mass 2 1
+mass 3 1
+velocity	    all create 3000.0 ${seed}
+velocity	    all create 3000.0 491
+
+# dump            min all atom 1 min_dump.atom
+# minimize        1e-4 1e-6 10000 100000
+
+
+thermo_style    custom step temp press
+
+####################
+# fix             begin all npt temp 1400.0 1400.0 0.5 iso 0.0 0.0 ${max_P}
+
+# compute         unX all property/atom xu yu zu
+# fix             avepos all ave/atom 10 100 ${frame_period} c_unX[1] c_unX[2] c_unX[3]
+
+# fix		        mom all momentum 200 linear 1 1 1
+
+# run             100
+
+####################
+
+# dump light all custom ${frame_period} single_${N_Xe}_sia_${N_sia}.dump id type f_avepos[1] f_avepos[2] f_avepos[3]
+dump init all atom 1 initial_10.atom
+
+thermo		    1000
+run		        0
+WARNING: No fixes defined, atoms won't move (src/verlet.cpp:55)
+WARNING: No pairwise cutoff or binsize set. Atom sorting therefore disabled. (src/atom.cpp:2155)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (src/comm_brick.cpp:210)
+Per MPI rank memory allocation (min/avg/max) = 3.373 | 3.373 | 3.373 Mbytes
+Step Temp Press 
+       0         3000    18444.442 
+Loop time of 3.09944e-06 on 1 procs for 0 steps with 2000 atoms
+
+32.3% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0          | 0          | 0          |   0.0 |  0.00
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0          | 0          | 0          |   0.0 |  0.00
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 3.099e-06  |            |       |100.00
+
+Nlocal:        2000.00 ave        2000 max        2000 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        331.000 ave         331 max         331 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:         0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+
+# unfix		    begin
+# fix             main all nve
+# run 		    500
+Total wall time: 0:00:00

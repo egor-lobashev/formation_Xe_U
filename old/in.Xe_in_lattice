@@ -1,0 +1,111 @@
+units metal
+atom_style	atomic
+
+variable	    a equal 3.556
+variable        max_P equal 1000
+variable        barostat_step equal 0.1
+variable        prev_P equal 0
+variable        frame_period equal 1000000
+
+variable        porosity index 0.004
+variable        seed index 491
+
+lattice         bcc $a
+variable        size equal 20
+region		    box block 0 ${size} 0 ${size} 0 ${size}
+create_box      3 box
+
+# mass            1 298.02891
+# mass            2 95.94
+# mass            3 131.3
+
+
+label           loop
+#__________________________________________________________________
+
+lattice         bcc $a
+
+change_box      all x final 0 ${size} y final 0 ${size} z final 0 ${size}
+
+delete_atoms    group all
+create_atoms    1 box
+
+delete_atoms    porosity box ${porosity} 49
+
+###########
+lattice         sc $(v_a) origin $(1/4/3) $(1/2/3) 0
+create_atoms    3 box
+
+variable        Xe_min equal $(atoms-8000)
+
+variable        j loop $(8000-124)
+
+label           delete_Xe_loop
+group           to_delete id $(round(random(v_Xe_min, atoms, v_j)))
+delete_atoms    group to_delete
+group           to_delete delete
+next            j
+if              "$j >= $(8000-125)" then "jump in.Xe_in_lattice delete_Xe_break" &
+        else "jump in.Xe_in_lattice delete_Xe_loop"
+label           delete_Xe_break
+
+lattice         bcc $a
+###########
+
+velocity	    all create 3000.0 ${seed}
+
+pair_style      eam/alloy
+pair_coeff      * * U_Mo_Xe.2013.eam.alloy U Mo Xe
+
+
+thermo_style custom step temp press
+
+####################
+fix             main all nvt temp 1400.0 1400.0 0.5
+
+variable        P equal press
+fix             ave_P all ave/time 100 1000 200000 v_P
+
+dump atom all atom 10 why_so_big_pressure.atom
+thermo          10
+run             0
+
+write_data data
+
+# variable        abs_P equal "abs(f_ave_P)"
+
+
+# if              "${abs_P} < ${max_P}" then "jump in.Xe_in_lattice break"
+
+# if              "$(f_ave_P*v_prev_P) < 0" then "variable barostat_step equal v_barostat_step/10"
+# if              "$(f_ave_P) > 0" then "variable a equal $(v_a + v_barostat_step)" else "variable a equal $(v_a - v_barostat_step)"
+# variable        prev_P equal f_ave_P
+# jump            in.Xe_in_lattice loop
+
+# label break
+# unfix           ave_P
+# unfix           barostat
+
+# # fix anyway all print 10 "anyway" append "barostat.txt
+
+# ####################
+
+
+
+# compute unX all property/atom xu yu zu
+# fix avepos all ave/atom 10 100 ${frame_period} c_unX[1] c_unX[2] c_unX[3]
+
+# fix		mom all momentum 1000 linear 1 1 1
+# run 100
+
+# ####################
+
+# dump light all custom ${frame_period} formation_rand_seed${seed}_p${porosity}.dump id type f_avepos[1] f_avepos[2] f_avepos[3]
+
+
+# thermo		    1000
+# run		        1000000
+
+# unfix		main
+# fix new all nve
+# run 			100000000
