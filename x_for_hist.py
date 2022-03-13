@@ -2,9 +2,8 @@ import numpy as np
 
 f = open('t_size', 'r')
 
-t_min = 100
-t_max = 100
-
+t_min = 99
+t_max = 99
 ans = dict()
 for s in f:
     if s == '\n':
@@ -26,3 +25,4 @@ f.close()
 for k in ans.keys():
     # print(', '.join(map(str, [k] * ans[k])), end = ', ')
     print('[', k, ']*', ans[k], sep = '', end = '+')
+print()

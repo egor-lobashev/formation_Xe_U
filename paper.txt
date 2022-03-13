@@ -1,0 +1,22 @@
+exp:
+
+https://iopscience.iop.org/journal/0022-3727 (radial distribution)
+https://doi.org/10.1016/0022-3115(93)90285-7
+/10.1016/j.jnucmat.2012.01.022 (Miller, photots)
+https://doi.org/10.1016/j.jnucmat.2006.02.047 (high pressure)
+https://doi.org/10.1016/j.nimb.2007.10.035 (too big)
+https://doi.org/10.1007/s00604-003-0135-9 (too big)
+
+ab-initio:
+
+https://doi.org/10.1016/j.jnucmat.2006.02.048 (ab-initio)
+
+mod:
+
+https://doi.org/10.1016/j.jnucmat.2018.05.032 (th. cond.)
+https://hal.archives-ouvertes.fr/hal-02874503/document (EOS)
+
+close:
+
+https://sci-hub.yncjkj.com/10.1016/j.matdes.2015.02.005 (very close to mine)
+https://sci-hub.yncjkj.com/10.1016/j.jnucmat.2017.04.016 (too)

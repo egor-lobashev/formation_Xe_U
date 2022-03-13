@@ -8,20 +8,15 @@ def unwrap_bubble_trajectory(trajectory, cell_size):
         dr = np.min((dr, abs(dr - cell_size)), axis = 0) * np.sign(cell_size/2 - dr)
         for j in range(3):
             trajectory[i+1][j+1] = trajectory[i][j+1] + dr[j]
-
-f = open('C_sia_approx.txt', 'r')
-C_sia = eval(f.readline())
-f.close()
         
 def dr2(r1, r2):
     dr = np.array(r2) - np.array(r1)
     return np.dot(dr, dr)
 
-def plot_data_for_a_trajectory(trajectory, plot_data):
+def plot_data_for_a_trajectory(trajectory, plot_data, C_sia):
     for i in range(1, len(trajectory)):
         if len(plot_data) <= i:
             plot_data.append([])
-
         for j in range(len(trajectory) - i):
             plot_data[i].append(dr2(trajectory[j][1:], trajectory[j+i][1:]) / C_sia[j])
 
@@ -47,7 +42,7 @@ def only_good_timesteps(trajectory, timestep_min, timestep_max):
 #     for k in distribution.keys():
 #         print(k, np.mean(distribution[k]), len(distribution[k]), sep = ', ')
 
-def D(bubble_size, timestep_min, timestep_max, cell_size, only_single_steps=False):
+def D(bubble_size, timestep_min, timestep_max, cell_size, C_sia, only_single_steps=False):
     trajectories_with_size = []
 
     for filename in sys.argv[1:]:
@@ -69,17 +64,18 @@ def D(bubble_size, timestep_min, timestep_max, cell_size, only_single_steps=Fals
         if len(trajectory) == 0:
             continue
         unwrap_bubble_trajectory(trajectory, cell_size)
-        plot_data_for_a_trajectory(trajectory, plot_data)
+        plot_data_for_a_trajectory(trajectory, plot_data, C_sia)
 
 
     # for i in range(1, len(plot_data)-1):
     #     data = plot_data[i]
     #     print(i, np.mean(data), np.std(data)/(len(plot_data[i])/i)**0.5, sep = ', ')
-    
+    ###### print(np.max(plot_data[1])**0.5)
     if len(plot_data) == 1:
         return '?'
     else:
-        return np.mean(plot_data[1])/6, np.std(plot_data[1])/6/len(plot_data[1])**0.5
+        # return np.mean(plot_data[1])/6, np.std(plot_data[1])/6/len(plot_data[1])**0.5
+        return list(map(np.mean, (plot_data))) #np.std(plot_data[1])/6/len(plot_data[1])**0.5
 
     """
     # total_data = 0
@@ -106,14 +102,20 @@ def D(bubble_size, timestep_min, timestep_max, cell_size, only_single_steps=Fals
 timestep_min = 0 # 40
 timestep_max = 1e10
 
+f = open('C_sia_approx.txt', 'r')
+C_sia = eval(f.readline())
+f.close()
+
+C_sia = [1]*1000
+
 a = 3.556
-cr_cells = 20
+cr_cells = 10
 cell_size = a * cr_cells
 
-for bubble_size in range(1, 120):
-    D_1 = D(bubble_size, timestep_min, timestep_max, cell_size, True)
-    if D_1 != '?':
-        print(bubble_size, D_1[0], D_1[1], sep = ', ')
+# for bubble_size in range(1, 120):
+#     D_1 = D(bubble_size, timestep_min, timestep_max, cell_size, C_sia, True)
+#     if D_1 != '?':
+#         print('', D_1[0], D_1[1], sep = ' ')
 
-# print(D(1, timestep_min, timestep_max, cell_size, True))
+print(D(10, timestep_min, timestep_max, cell_size, C_sia, True))
 # \left(x_{1},y_{1}+z_{1}t\right)

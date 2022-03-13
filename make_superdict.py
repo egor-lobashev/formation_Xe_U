@@ -33,20 +33,33 @@ def set_modifiers(pipeline):
     pipeline.modifiers[5].enabled = False
     pipeline.modifiers[6].enabled = False
 
-def number_of_Xe(pipeline):
-    before = pipeline.modifiers[4].expression
+def number_of_U_and_Xe(pipeline):
+    second_before = pipeline.modifiers[4].expression
+    third_before = pipeline.modifiers[1].expression
+    pipeline.modifiers[1].expression = '1==0'
+
     pipeline.modifiers[4].expression = 'ParticleType == 3'
+    N_Xe = pipeline.compute(0).attributes['ExpressionSelection.count.2']
 
-    ans = pipeline.compute(0).attributes['ExpressionSelection.count.2']
+    pipeline.modifiers[4].expression = 'ParticleType == 1'
+    N_U = pipeline.compute(0).attributes['ExpressionSelection.count.2']
 
-    pipeline.modifiers[4].expression = before
-    return ans
+    pipeline.modifiers[4].expression = second_before
+    pipeline.modifiers[1].expression = third_before
 
-set_modifiers(pipeline)
-N_Xe = number_of_Xe(pipeline)
-N_atoms = pipeline.compute(0).particles.count
-extra_atoms_0 = N_atoms - 16000
-a = pipeline.compute(0).cell[0][0] / 20
+    return N_U, N_Xe
+
+def set_parameters(filename):
+    pipeline = import_file(filename, columns =
+        ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z"])
+
+    a = 3.556# pipeline.compute(0).cell[0][0] / 20
+    set_modifiers(pipeline)
+    N_U, N_Xe = number_of_U_and_Xe(pipeline)
+    N_atoms = N_U + N_Xe
+    sia_0 = N_atoms - 16000
+
+    return pipeline, a, N_atoms, N_Xe, sia_0
 
 #####################
 def center_of_mass(pipeline, timestep):
@@ -64,21 +77,36 @@ def center_of_mass(pipeline, timestep):
 
     return com
 
-superdict = dict()
-for timestep in range(0, pipeline.source.num_frames):
-    data = pipeline.compute(timestep)
-    clusters_list = list(data.tables['clusters'].xy()[:,1])
+def N_vac(n):
+    return (2.65 - 2.24 * np.exp(-0.327 * n)) * n
 
-    for cluster in range(1, len(clusters_list) + 1):
-        pipeline.modifiers[4].expression = 'Cluster == ' + str(cluster)
-        selection = pipeline.compute(timestep).particles.selection
-        selected = np.where(selection == 1)[0]
+def C_sia_avg():
+    vacs = N_vac(N_Xe)
+    return N_atoms - N_Xe + vacs - 2000
 
-        key = (len(selected), selected[0])
-        if key not in superdict.keys():
-            superdict[key] = ([], list(selected))
+def print_superdict():
+    pipeline, a, N_atoms, N_Xe, sia_0 = set_parameters(filename)
 
-        com = center_of_mass(pipeline, timestep)
+    superdict = dict()
+    for timestep in range(0, pipeline.source.num_frames):
+        data = pipeline.compute(timestep)
+        clusters_list = list(data.tables['clusters'].xy()[:,1])
 
-        superdict[key][0].append([timestep] + list(com))
-print(superdict)
+        for cluster in range(1, len(clusters_list) + 1):
+            pipeline.modifiers[4].expression = 'Cluster == ' + str(cluster)
+            selection = pipeline.compute(timestep).particles.selection
+            selected = np.where(selection == 1)[0]
+
+            key = (len(selected), selected[0])
+            if key not in superdict.keys():
+                superdict[key] = ([], list(selected))
+
+            com = center_of_mass(pipeline, timestep)
+
+            superdict[key][0].append([timestep] + list(com))
+    print(superdict)
+
+print_superdict()
+
+# pipeline, a, N_atoms, N_Xe, sia_0 = set_parameters(filename)
+# print(C_sia_avg()) # not make_superdict

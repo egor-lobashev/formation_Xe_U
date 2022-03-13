@@ -26,8 +26,8 @@ def R(vacs):
     v_0 = a**3 / 2
     return (3*vacs*v_0 /4/np.pi) ** (1/3)
 
-print('Xe_all, vacs_all, R_all')
+print('Xe_all vX_all')
 for k in vacs_on_Xe.keys():
     if len(vacs_on_Xe[k]) != 1:
         # print(k, np.mean(vacs_on_Xe[k]), np.std(vacs_on_Xe[k]) / (len(vacs_on_Xe[k]) - 1)**0.5, sep = ', ')
-        print(k, np.mean(vacs_on_Xe[k]), R(np.mean(vacs_on_Xe[k])), sep = ', ')
+        print(k, np.mean(vacs_on_Xe[k])/k, sep = ' ')
